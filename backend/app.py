@@ -4,15 +4,39 @@ Flask API server for Constitution GPT.
 """
 
 import os
+from pathlib import Path
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 from rag import query_rag
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:5173", "http://localhost:3000"])
+CORS(
+    app,
+    origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+)
+
+
+# ── API landing route ──────────────────────────────────────────────────────────
+@app.route("/", methods=["GET"])
+def index():
+    return jsonify({
+        "service": "ConstitutionGPT",
+        "status": "ok",
+        "endpoints": {
+            "health": "/health",
+            "chat": "/api/chat",
+            "rebuild_index": "/api/rebuild-index",
+        },
+    })
 
 
 # ── Health check ────────────────────────────────────────────────────────────────
@@ -37,7 +61,7 @@ def chat():
     """
     data = request.get_json(force=True)
 
-    question = (data.get("question") or "").strip()
+    question = (data.get("question") or data.get("message") or "").strip()
     if not question:
         return jsonify({"error": "question is required"}), 400
 
@@ -68,7 +92,7 @@ def rebuild_index():
 
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))
+    port = int(os.getenv("PORT", 5001))
     debug = os.getenv("FLASK_DEBUG", "false").lower() == "true"
     print(f"Starting ConstitutionGPT backend on port {port}...")
     app.run(host="0.0.0.0", port=port, debug=debug)

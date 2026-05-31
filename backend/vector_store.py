@@ -10,8 +10,19 @@ from pypdf import PdfReader
 from sentence_transformers import SentenceTransformer
 
 VECTOR_STORE_PATH = "vector_store.pkl"
+MODEL_NAME = "all-MiniLM-L6-v2"
 CHUNK_SIZE = 500        # characters per chunk
 CHUNK_OVERLAP = 100     # character overlap between chunks
+
+_model = None
+
+
+def get_embedding_model(local_files_only: bool = True) -> SentenceTransformer:
+    """Load the embedding model once and reuse it across requests."""
+    global _model
+    if _model is None:
+        _model = SentenceTransformer(MODEL_NAME, local_files_only=local_files_only)
+    return _model
 
 
 def load_pdf(pdf_path: str) -> list[dict]:
@@ -49,7 +60,7 @@ def chunk_pages(pages: list[dict]) -> list[dict]:
 def build_vector_store(pdf_path: str) -> dict:
     """Build and cache a FAISS-style vector store from a PDF."""
     print("[vector_store] Building vector store...")
-    model = SentenceTransformer("all-MiniLM-L6-v2")
+    model = get_embedding_model(local_files_only=False)
 
     pages = load_pdf(pdf_path)
     chunks = chunk_pages(pages)
@@ -60,7 +71,7 @@ def build_vector_store(pdf_path: str) -> dict:
     store = {
         "chunks": chunks,
         "embeddings": embeddings,  # shape: (N, dim)
-        "model_name": "all-MiniLM-L6-v2",
+        "model_name": MODEL_NAME,
     }
 
     with open(VECTOR_STORE_PATH, "wb") as f:
@@ -89,7 +100,7 @@ def similarity_search(query: str, store: dict, top_k: int = 5) -> list[dict]:
     Retrieve the top_k most relevant chunks for a query using cosine similarity.
     Returns list of chunk dicts with an added 'score' field.
     """
-    model = SentenceTransformer(store["model_name"])
+    model = get_embedding_model(local_files_only=True)
     query_vec = model.encode([query], convert_to_numpy=True)[0]  # (dim,)
 
     embeddings = store["embeddings"]  # (N, dim)

@@ -1,30 +1,34 @@
 """
 rag.py
-Retrieval-Augmented Generation pipeline using Anthropic Claude.
+Retrieval-Augmented Generation pipeline using Google Gemini.
 """
 
 import os
-import anthropic
+from pathlib import Path
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 from vector_store import get_vector_store, similarity_search
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
 
-PDF_PATH = "../data/constitution.pdf"
+PDF_PATH = str(BASE_DIR.parent / "data" / "constitution.pdf")
 TOP_K = 5
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 # ── Module-level state ─────────────────────────────────────────────────────────
 _store = None
 _client = None
 
 
-def _get_client() -> anthropic.Anthropic:
+def _get_client() -> genai.Client:
     global _client
     if _client is None:
-        api_key = os.getenv("ANTHROPIC_API_KEY")
+        api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
-            raise ValueError("ANTHROPIC_API_KEY not found in environment")
-        _client = anthropic.Anthropic(api_key=api_key)
+            raise ValueError("GOOGLE_API_KEY not found in environment")
+        _client = genai.Client(api_key=api_key)
     return _client
 
 
@@ -44,8 +48,21 @@ def _build_context(chunks: list[dict]) -> str:
     return "\n\n".join(parts)
 
 
-SYSTEM_PROMPT = """You are ConstitutionGPT, an expert on the United States Constitution.
-You answer questions strictly based on the provided excerpts from the Constitution.
+def _build_history(chat_history: list[dict] | None) -> str:
+    if not chat_history:
+        return "No previous conversation."
+
+    lines = []
+    for message in chat_history:
+        role = message.get("role", "user").title()
+        content = str(message.get("content", "")).strip()
+        if content:
+            lines.append(f"{role}: {content}")
+    return "\n".join(lines) if lines else "No previous conversation."
+
+
+SYSTEM_PROMPT = """You are ConstitutionGPT, an expert on the Constitution represented by the provided excerpts.
+You answer questions strictly based on those excerpts.
 
 Guidelines:
 - Cite the article, section, or amendment when relevant (e.g. "Article I, Section 8" or "14th Amendment").
@@ -59,7 +76,7 @@ def query_rag(question: str, chat_history: list[dict] | None = None) -> dict:
     Run a RAG query:
     1. Retrieve relevant chunks from the vector store.
     2. Build a prompt with context + conversation history.
-    3. Call Claude and return answer + source chunks.
+    3. Call Gemini and return answer + source chunks.
 
     Args:
         question: The user's question.
@@ -75,29 +92,28 @@ def query_rag(question: str, chat_history: list[dict] | None = None) -> dict:
     store = _get_store()
     chunks = similarity_search(question, store, top_k=TOP_K)
     context = _build_context(chunks)
+    history = _build_history(chat_history)
 
-    user_message = (
-        f"Relevant excerpts from the U.S. Constitution:\n\n"
+    prompt = (
+        f"Conversation so far:\n{history}\n\n"
+        f"Relevant excerpts from the Constitution:\n\n"
         f"{context}\n\n"
         f"---\n\n"
         f"Question: {question}"
     )
 
-    # Build messages array
-    messages: list[dict] = []
-    if chat_history:
-        messages.extend(chat_history)
-    messages.append({"role": "user", "content": user_message})
-
     client = _get_client()
-    response = client.messages.create(
-        model="claude-opus-4-5",
-        max_tokens=1024,
-        system=SYSTEM_PROMPT,
-        messages=messages,
+    response = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_PROMPT,
+            max_output_tokens=1024,
+            temperature=1.0,
+        ),
     )
 
-    answer = response.content[0].text
+    answer = response.text or "I could not generate an answer from the retrieved excerpts."
 
     sources = [
         {"page": c["page"], "text": c["text"][:300], "score": round(c["score"], 4)}

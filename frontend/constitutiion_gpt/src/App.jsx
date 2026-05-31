@@ -27,23 +27,28 @@ function App() {
     setIsLoading(true)
 
     try {
-      // Replace with your actual backend endpoint (e.g., FastAPI or Flask)
-      // Example: http://127.0.0.1:8000/api/chat
-      const response = await fetch('http://127.0.0.1:8000/api/chat', {
+      const history = messages
+        .slice(1)
+        .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
+        .map((msg) => ({ role: msg.role, content: msg.content }))
+
+      const response = await fetch('http://127.0.0.1:5001/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage.content }),
+        body: JSON.stringify({ question: userMessage.content, history }),
       })
 
-      if (!response.ok) throw new Error('Network response was not ok')
-
       const data = await response.json()
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.reply }])
+      if (!response.ok) {
+        throw new Error(data.detail || data.error || 'Network response was not ok')
+      }
+
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.answer }])
     } catch (error) {
       console.error("Error fetching response:", error)
       setMessages((prev) => [
         ...prev, 
-        { role: 'assistant', content: 'Error: Could not connect to the backend. Please ensure the server is running.' }
+        { role: 'assistant', content: `Error: ${error.message}` }
       ])
     } finally {
       setIsLoading(false)
