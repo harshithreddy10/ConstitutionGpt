@@ -1,8 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 
+const suggestions = [
+  'What are Fundamental Rights?',
+  'Explain Article 21',
+  'What is the Preamble?',
+]
+
 function App() {
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Hello! I am ConstitutionGPT. Ask me anything about the Constitution.' }
+    { role: 'assistant', content: 'Namaste. I am ConstitutionGPT, ready to help you explore the Indian Constitution.' }
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -56,14 +62,64 @@ function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 font-sans text-gray-900">
-      {/* Header */}
-      <header className="bg-slate-900 text-white p-4 shadow-md flex justify-center items-center">
-        <h1 className="text-2xl font-bold tracking-wide">ConstitutionGPT</h1>
+    <div className="flex h-screen flex-col bg-[#f8f5ef] font-sans text-slate-950">
+      <header className="border-b border-orange-200/70 bg-white shadow-sm">
+        <div className="h-1.5 bg-gradient-to-r from-[#ff9933] via-white to-[#138808]" />
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <img
+              src="/indian-flag.svg"
+              alt="Indian flag"
+              className="h-16 w-16 shrink-0 object-contain"
+            />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#b35a00]">Indian Constitution</p>
+              <h1 className="truncate text-2xl font-bold tracking-wide text-slate-950">ConstitutionGPT</h1>
+            </div>
+          </div>
+          <div className="hidden items-center gap-2 rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-800 sm:flex">
+            <span className="h-2 w-2 rounded-full bg-[#138808]" />
+            Satyameva Jayate
+          </div>
+        </div>
       </header>
 
-      {/* Chat Container */}
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 w-full max-w-4xl mx-auto">
+      <section className="border-b border-orange-100 bg-gradient-to-r from-orange-50 via-white to-green-50">
+        <div className="mx-auto grid w-full max-w-5xl gap-4 px-4 py-5 sm:px-6 lg:grid-cols-[1.25fr_0.75fr]">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#0b3d91]">Justice, Liberty, Equality, Fraternity</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-950 sm:text-3xl">Ask questions grounded in the Constitution of India.</h2>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="border-b-4 border-[#ff9933] bg-white px-3 py-3 shadow-sm">
+              <p className="text-lg font-bold text-slate-950">395</p>
+              <p className="text-xs text-slate-600">Articles</p>
+            </div>
+            <div className="border-b-4 border-[#0b3d91] bg-white px-3 py-3 shadow-sm">
+              <p className="text-lg font-bold text-slate-950">22</p>
+              <p className="text-xs text-slate-600">Parts</p>
+            </div>
+            <div className="border-b-4 border-[#138808] bg-white px-3 py-3 shadow-sm">
+              <p className="text-lg font-bold text-slate-950">1950</p>
+              <p className="text-xs text-slate-600">In force</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <main className="mx-auto w-full max-w-5xl flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="mb-5 flex flex-wrap gap-2">
+          {suggestions.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              onClick={() => setInput(suggestion)}
+              className="border border-orange-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-[#ff9933] hover:text-slate-950"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
         <div className="flex flex-col space-y-6">
           {messages.map((msg, index) => (
             <div
@@ -71,10 +127,10 @@ function App() {
               className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[85%] sm:max-w-[75%] p-4 rounded-2xl shadow-sm ${
+                className={`max-w-[88%] p-4 shadow-sm sm:max-w-[75%] ${
                   msg.role === 'user'
-                    ? 'bg-blue-600 text-white rounded-br-none'
-                    : 'bg-white border border-gray-200 rounded-bl-none'
+                    ? 'bg-[#0b3d91] text-white'
+                    : 'border border-orange-100 bg-white text-slate-900'
                 }`}
               >
                 <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
@@ -84,10 +140,10 @@ function App() {
           
           {isLoading && (
             <div className="flex justify-start">
-              <div className="bg-white border border-gray-200 p-4 rounded-2xl shadow-sm rounded-bl-none flex space-x-2 items-center">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+              <div className="flex items-center space-x-2 border border-orange-100 bg-white p-4 shadow-sm">
+                <div className="h-2 w-2 animate-bounce rounded-full bg-[#ff9933]"></div>
+                <div className="h-2 w-2 animate-bounce rounded-full bg-[#0b3d91] delay-100"></div>
+                <div className="h-2 w-2 animate-bounce rounded-full bg-[#138808] delay-200"></div>
               </div>
             </div>
           )}
@@ -95,22 +151,21 @@ function App() {
         </div>
       </main>
 
-      {/* Input Area */}
-      <footer className="bg-white border-t border-gray-200 p-4">
-        <div className="w-full max-w-4xl mx-auto">
+      <footer className="border-t border-orange-200/70 bg-white p-4">
+        <div className="mx-auto w-full max-w-5xl">
           <form onSubmit={handleSend} className="flex gap-3">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a question about the Constitution..."
-              className="flex-1 border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
+              placeholder="Ask about Fundamental Rights, Directive Principles, Articles, or Amendments..."
+              className="flex-1 border border-orange-200 px-4 py-3 shadow-sm transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#0b3d91]"
               disabled={isLoading}
             />
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 px-6 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              className="bg-[#138808] px-6 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-[#0f6d06] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Send
             </button>
