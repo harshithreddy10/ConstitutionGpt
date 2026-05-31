@@ -1,6 +1,6 @@
 # 📜 ConstitutionGPT
 
-> A Retrieval-Augmented Generation (RAG) chatbot that answers questions about the United States Constitution using Anthropic Claude and local vector search.
+> A Retrieval-Augmented Generation (RAG) chatbot that answers questions about the United States Constitution using Google Gemini and local vector search.
 
 ---
 
@@ -36,7 +36,7 @@ User Question
                                                     │  2. Cosine search    │
                                                     │  3. Top-5 chunks     │
                                                     │  4. Build prompt     │
-                                                    │  5. Claude API call  │
+                                                    │  5. Gemini API call  │
                                                     └──────────┬──────────┘
                                                                │
                                                     ┌──────────▼──────────┐
@@ -48,7 +48,7 @@ User Question
 ```
 
 **Embedding model**: `all-MiniLM-L6-v2` (runs locally via sentence-transformers)
-**LLM**: Claude via Anthropic API
+**LLM**: Gemini via Google AI API
 **Vector search**: Cosine similarity over NumPy (no external DB)
 **Frontend**: React 18 + Vite + Tailwind CSS
 **Backend**: Python 3.11 + Flask
@@ -61,7 +61,7 @@ User Question
 constitution-gpt/
 ├── backend/
 │   ├── app.py              # Flask REST API server
-│   ├── rag.py              # RAG pipeline (retrieval + Claude)
+│   ├── rag.py              # RAG pipeline (retrieval + Gemini)
 │   ├── vector_store.py     # PDF loading, chunking, embedding, search
 │   ├── .env                # API keys (never commit this)
 │   └── requirements.txt    # Python dependencies
@@ -98,7 +98,7 @@ constitution-gpt/
 | Node.js | 18+ | nodejs.org |
 | npm | 9+ | Comes with Node |
 | Git | any | git-scm.com |
-| Anthropic API Key | — | console.anthropic.com |
+| Google AI API Key | — | aistudio.google.com |
 
 ---
 
@@ -125,13 +125,13 @@ cd backend
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-echo "ANTHROPIC_API_KEY=sk-ant-your-key-here" > .env
+echo "GOOGLE_API_KEY=your-google-ai-key-here" > .env
 python app.py
 ```
 
 > First startup takes ~30 seconds to build the vector index. Subsequent starts are instant.
 
-Backend runs at: **http://localhost:5000**
+Backend runs at: **http://localhost:5001**
 
 ### 4. Set up the frontend
 
@@ -177,8 +177,8 @@ Force-rebuilds the vector store after replacing the PDF.
 | `CHUNK_SIZE` | `vector_store.py` | `500` | Characters per chunk |
 | `CHUNK_OVERLAP` | `vector_store.py` | `100` | Overlap between chunks |
 | `TOP_K` | `rag.py` | `5` | Chunks retrieved per query |
-| `model` | `rag.py` | `claude-opus-4-5` | Claude model used |
-| `PORT` | `.env` | `5000` | Backend server port |
+| `GEMINI_MODEL` | `.env` | `gemini-2.5-flash` | Gemini model used |
+| `PORT` | `.env` | `5001` | Backend server port |
 
 ---
 
