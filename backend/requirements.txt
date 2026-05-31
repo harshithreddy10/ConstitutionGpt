@@ -1,6 +1,8 @@
 flask
 flask-cors
 google-genai
+numpy
 pypdf
 python-dotenv
 sentence-transformers
+gunicorn
