@@ -1,93 +1,197 @@
-# ConstitutionGpt
+# 📜 ConstitutionGPT
 
+> A Retrieval-Augmented Generation (RAG) chatbot that answers questions about the United States Constitution using Anthropic Claude and local vector search.
 
+---
 
-## Getting started
+## 🧠 What is ConstitutionGPT?
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+ConstitutionGPT is an AI-powered question answering system built on top of the full text of the U.S. Constitution. It uses **RAG (Retrieval-Augmented Generation)** — meaning it doesn't just rely on the LLM's memory, it actually retrieves relevant excerpts from the Constitution in real time and grounds every answer in the source text.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+### Key Features
+- 🔍 **Semantic search** over the full Constitution text
+- 📄 **Source citations** — every answer shows which page/section it came from
+- 💬 **Multi-turn conversation** — remembers context across a chat session
+- ⚡ **Fast responses** — vector index is built once and cached locally
+- 🔒 **No external vector DB** — runs entirely on your machine
 
-## Add your files
+---
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+## 🏗️ Architecture
 
 ```
-cd existing_repo
-git remote add origin https://code.swecha.org/Harshith_2006/constitutiongpt.git
-git branch -M main
-git push -uf origin main
+User Question
+      │
+      ▼
+┌─────────────────┐        POST /api/chat        ┌──────────────────────────┐
+│  React Frontend │ ──────────────────────────▶  │     Flask Backend        │
+│  (Vite + TW)    │ ◀──────────────────────────  │     app.py               │
+└─────────────────┘     { answer, sources }       └────────────┬─────────────┘
+                                                               │
+                                                    ┌──────────▼──────────┐
+                                                    │    RAG Pipeline      │
+                                                    │    rag.py            │
+                                                    │                      │
+                                                    │  1. Embed question   │
+                                                    │  2. Cosine search    │
+                                                    │  3. Top-5 chunks     │
+                                                    │  4. Build prompt     │
+                                                    │  5. Claude API call  │
+                                                    └──────────┬──────────┘
+                                                               │
+                                                    ┌──────────▼──────────┐
+                                                    │   vector_store.py    │
+                                                    │  PDF → chunks →      │
+                                                    │  embeddings →        │
+                                                    │  vector_store.pkl    │
+                                                    └─────────────────────┘
 ```
 
-## Integrate with your tools
+**Embedding model**: `all-MiniLM-L6-v2` (runs locally via sentence-transformers)
+**LLM**: Claude via Anthropic API
+**Vector search**: Cosine similarity over NumPy (no external DB)
+**Frontend**: React 18 + Vite + Tailwind CSS
+**Backend**: Python 3.11 + Flask
 
-- [ ] [Set up project integrations](https://code.swecha.org/Harshith_2006/constitutiongpt/-/settings/integrations)
+---
 
-## Collaborate with your team
+## 📁 Project Structure
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+```
+constitution-gpt/
+├── backend/
+│   ├── app.py              # Flask REST API server
+│   ├── rag.py              # RAG pipeline (retrieval + Claude)
+│   ├── vector_store.py     # PDF loading, chunking, embedding, search
+│   ├── .env                # API keys (never commit this)
+│   └── requirements.txt    # Python dependencies
+│
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx         # Main layout + state management
+│   │   ├── Message.jsx     # Chat bubble component
+│   │   ├── SourceCard.jsx  # Collapsible source excerpt card
+│   │   ├── main.jsx        # React entry point
+│   │   └── index.css       # Tailwind directives + global styles
+│   ├── index.html
+│   ├── package.json
+│   ├── tailwind.config.js
+│   ├── postcss.config.js
+│   └── vite.config.js
+│
+├── data/
+│   └── constitution.pdf    # Add this yourself (see setup)
+│
+├── README.md
+├── CONTRIBUTING.md
+├── USER_MANUAL.md
+└── AGENTS.md
+```
 
-## Test and Deploy
+---
 
-Use the built-in continuous integration in GitLab.
+## ⚙️ Prerequisites
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+| Tool | Version | Install |
+|------|---------|---------|
+| Python | 3.10+ | python.org |
+| Node.js | 18+ | nodejs.org |
+| npm | 9+ | Comes with Node |
+| Git | any | git-scm.com |
+| Anthropic API Key | — | console.anthropic.com |
 
-***
+---
 
-# Editing this README
+## 🚀 Quick Start
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### 1. Clone the repository
 
-## Suggestions for a good README
+```bash
+git clone https://code.swecha.org/<your-team>/<your-repo>.git
+cd constitution-gpt
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### 2. Add the Constitution PDF
 
-## Name
-Choose a self-explaining name for your project.
+```bash
+curl -o data/constitution.pdf \
+  "https://constitutioncenter.org/media/files/constitution.pdf"
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+### 3. Set up the backend
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+echo "ANTHROPIC_API_KEY=sk-ant-your-key-here" > .env
+python app.py
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+> First startup takes ~30 seconds to build the vector index. Subsequent starts are instant.
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+Backend runs at: **http://localhost:5000**
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+### 4. Set up the frontend
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+Frontend runs at: **http://localhost:5173**
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+---
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## 🔌 API Reference
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+### `POST /api/chat`
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+```json
+// Request
+{ "question": "What does the First Amendment protect?", "history": [] }
 
-## License
-For open source projects, say how it is licensed.
+// Response
+{
+  "answer": "The First Amendment protects...",
+  "sources": [{ "page": 3, "text": "Congress shall make no law...", "score": 0.89 }]
+}
+```
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+### `GET /health`
+```json
+{ "status": "ok", "service": "ConstitutionGPT" }
+```
+
+### `POST /api/rebuild-index`
+Force-rebuilds the vector store after replacing the PDF.
+
+---
+
+## 🛠️ Configuration
+
+| Setting | File | Default | Description |
+|---------|------|---------|-------------|
+| `CHUNK_SIZE` | `vector_store.py` | `500` | Characters per chunk |
+| `CHUNK_OVERLAP` | `vector_store.py` | `100` | Overlap between chunks |
+| `TOP_K` | `rag.py` | `5` | Chunks retrieved per query |
+| `model` | `rag.py` | `claude-opus-4-5` | Claude model used |
+| `PORT` | `.env` | `5000` | Backend server port |
+
+---
+
+## 👥 Team
+
+| Name | Role |
+|------|------|
+| Member 1 | Backend — RAG pipeline, vector store |
+| Member 2 | Frontend — React UI, Tailwind CSS |
+| Member 3 | Integration, documentation, deployment |
+
+---
+
+## 📄 License
+
+MIT © 2025 — Built for Swecha PoC Demo
